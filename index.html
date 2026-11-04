@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candidate Nominations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1c2230; --muted: #626b7d;
+    --line: #e2e5eb; --accent: #2f5bea; --accent-soft: #eaf0ff;
+    --danger: #c63a3a; --ok: #1f8a4c; --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151b; --card:#1b1f27; --ink:#e7eaf0; --muted:#9aa3b2;
+            --line:#2c323d; --accent:#6d8dff; --accent-soft:#232b45; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:Inter, system-ui, sans-serif; background:var(--bg); color:var(--ink); line-height:1.5; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 1.75rem; margin: 0 0 6px; letter-spacing:-0.01em; }
+  .lead { color: var(--muted); margin: 0 0 28px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:18px; }
+  .card h2 { font-size:1.05rem; margin:0 0 14px; }
+  label { font-size:.88rem; font-weight:500; display:block; margin-bottom:6px; }
+  input[type=text], input[type=email], select, textarea {
+    width:100%; font:inherit; color:var(--ink); background:var(--bg);
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+  }
+  textarea { resize:vertical; min-height:70px; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:1px; border-color:transparent; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:600px){ .row { grid-template-columns:1fr; } }
+  .nom { border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; position:relative; }
+  .nom-head { display:flex; gap:10px; align-items:end; }
+  .nom-head > div { flex:1; }
+  .roles { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px; }
+  .role-chip { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line);
+    border-radius:999px; padding:6px 14px; cursor:pointer; font-size:.9rem; user-select:none; }
+  .role-chip input { accent-color: var(--accent); }
+  .role-chip.on { background:var(--accent-soft); border-color:var(--accent); }
+  .hint { color:var(--muted); font-size:.82rem; margin:4px 0 0; }
+  .why { margin-top:12px; }
+  .btn { font:inherit; font-weight:600; border-radius:8px; padding:10px 16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  .btn:hover { border-color:var(--accent); }
+  .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn.primary:hover { filter:brightness(1.08); }
+  .btn.small { padding:6px 10px; font-size:.82rem; font-weight:500; }
+  .btn.remove { color:var(--danger); }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; }
+  .err { color:var(--danger); font-size:.85rem; margin-top:6px; display:none; }
+  .err.show { display:block; }
+  .invalid { border-color:var(--danger) !important; }
+  .banner { border-radius:10px; padding:14px 16px; margin-bottom:18px; background:var(--accent-soft); font-size:.92rem; }
+  .email { border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:18px; }
+  .email-meta { padding:12px 16px; border-bottom:1px solid var(--line); font-size:.88rem; }
+  .email-meta div { margin:2px 0; }
+  .email-meta b { display:inline-block; width:64px; color:var(--muted); font-weight:500; }
+  .email-body { padding:16px; white-space:pre-wrap; font-size:.9rem; margin:0; font-family:inherit; }
+  .email-actions { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--line); flex-wrap:wrap; align-items:center; }
+  .email-actions a { font-size:.85rem; color:var(--accent); }
+  .copied { color:var(--ok); font-size:.82rem; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ======================= FORM VIEW ======================= -->
+  <div id="formView">
+    <h1>Candidate Nominations</h1>
+    <p class="lead">Choose candidates from the list, assign each up to three roles, and explain each choice. When you submit, two emails are generated: a confirmation for you and a copy for the review inbox.</p>
+
+    <form id="form" novalidate>
+      <div class="card">
+        <h2>Your details</h2>
+        <div class="row">
+          <div>
+            <label for="subName">Your name</label>
+            <input type="text" id="subName" autocomplete="name">
+            <div class="err" id="subNameErr">Please enter your name.</div>
+          </div>
+          <div>
+            <label for="subEmail">Your email</label>
+            <input type="email" id="subEmail" autocomplete="email">
+            <div class="err" id="subEmailErr">Please enter a valid email address.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Your preferred candidates</h2>
+        <div id="nominations"></div>
+        <button type="button" class="btn" id="addBtn">+ Add another candidate</button>
+        <div class="err" id="listErr"></div>
+      </div>
+
+      <div class="actions">
+        <span></span>
+        <button type="submit" class="btn primary">Submit and generate emails</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ======================= RESULT VIEW ======================= -->
+  <div id="resultView" class="hidden">
+    <h1>Your emails are ready</h1>
+    <p class="lead">Two emails were generated from your submission. Nothing has been sent yet: open each in your mail app, or copy it and send it yourself.</p>
+    <div id="emails"></div>
+    <button type="button" class="btn" id="backBtn">← Edit submission</button>
+  </div>
+
+</div>
+
+<script>
+/* ==========================================================
+   CONFIGURATION — edit these to fit your use
+   ========================================================== */
+const CONFIG = {
+  candidates: [
+    "Alex Morgan", "Jamie Chen", "Priya Nair", "Daniel Okafor",
+    "Sofia Rossi", "Liam O'Brien", "Elena Petrova", "Marcus Lee"
+  ],
+  roles: ["Role A", "Role B", "Role C"],
+  thirdPartyEmail: "review-panel@example.com",
+  thirdPartyName: "Review Panel",
+  organisation: "Nominations Committee"
+};
+
+/* ==========================================================
+   STATE + RENDERING
+   ========================================================== */
+let nominations = [];
+let nextId = 1;
+
+function newNomination() {
+  return { id: nextId++, candidate: "", roles: {} }; // roles: { "Role A": "why..." }
+}
+
+const $ = (id) => document.getElementById(id);
+
+function usedCandidates(exceptId) {
+  return new Set(nominations.filter(n => n.id !== exceptId && n.candidate).map(n => n.candidate));
+}
+
+function render() {
+  const host = $("nominations");
+  host.innerHTML = "";
+  nominations.forEach((nom, idx) => {
+    const box = document.createElement("div");
+    box.className = "nom";
+
+    // Header: dropdown + remove
+    const head = document.createElement("div");
+    head.className = "nom-head";
+    const field = document.createElement("div");
+    const lab = document.createElement("label");
+    lab.textContent = `Candidate ${idx + 1}`;
+    lab.htmlFor = `cand-${nom.id}`;
+    const sel = document.createElement("select");
+    sel.id = `cand-${nom.id}`;
+    const placeholder = new Option("Select a candidate…", "");
+    sel.add(placeholder);
+    const taken = usedCandidates(nom.id);
+    CONFIG.candidates.forEach(c => {
+      const o = new Option(c, c);
+      if (taken.has(c)) { o.disabled = true; o.textContent = `${c} (already chosen)`; }
+      sel.add(o);
+    });
+    sel.value = nom.candidate;
+    sel.addEventListener("change", () => { nom.candidate = sel.value; render(); });
+    field.append(lab, sel);
+    head.append(field);
+
+    if (nominations.length > 1) {
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "btn small remove";
+      rm.textContent = "Remove";
+      rm.addEventListener("click", () => {
+        nominations = nominations.filter(n => n.id !== nom.id);
+        render();
+      });
+      head.append(rm);
+    }
+    box.append(head);
+
+    // Roles (0–3)
+    const roles = document.createElement("div");
+    roles.className = "roles";
+    CONFIG.roles.forEach(r => {
+      const chip = document.createElement("label");
+      chip.className = "role-chip" + (r in nom.roles ? " on" : "");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = r in nom.roles;
+      cb.addEventListener("change", () => {
+        if (cb.checked) nom.roles[r] = nom.roles[r] || "";
+        else delete nom.roles[r];
+        render();
+      });
+      chip.append(cb, document.createTextNode(r));
+      roles.append(chip);
+    });
+    box.append(roles);
+    const hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = "Pick between 0 and 3 roles for this candidate.";
+    box.append(hint);
+
+    // "Why" field per chosen role
+    CONFIG.roles.filter(r => r in nom.roles).forEach(r => {
+      const w = document.createElement("div");
+      w.className = "why";
+      const l = document.createElement("label");
+      const tid = `why-${nom.id}-${r.replace(/\W/g, "")}`;
+      l.htmlFor = tid;
+      l.textContent = `Why did you choose ${nom.candidate || "this person"} for ${r}?`;
+      const t = document.createElement("textarea");
+      t.id = tid;
+      t.value = nom.roles[r];
+      t.placeholder = "Explain your reasoning…";
+      t.addEventListener("input", () => { nom.roles[r] = t.value; t.classList.remove("invalid"); });
+      w.append(l, t);
+      box.append(w);
+    });
+
+    host.append(box);
+  });
+
+  $("addBtn").disabled = nominations.length >= CONFIG.candidates.length;
+}
+
+/* ==========================================================
+   VALIDATION
+   ========================================================== */
+function showErr(id, on, msg) {
+  const e = $(id);
+  if (msg) e.textContent = msg;
+  e.classList.toggle("show", on);
+}
+
+function validate() {
+  let ok = true;
+  const name = $("subName").value.trim();
+  const email = $("subEmail").value.trim();
+  const nameBad = !name;
+  const emailBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  $("subName").classList.toggle("invalid", nameBad);
+  $("subEmail").classList.toggle("invalid", emailBad);
+  showErr("subNameErr", nameBad);
+  showErr("subEmailErr", emailBad);
+  if (nameBad || emailBad) ok = false;
+
+  const chosen = nominations.filter(n => n.candidate);
+  let listMsg = "";
+  if (!chosen.length) { listMsg = "Please select at least one candidate."; ok = false; }
+
+  nominations.forEach(n => {
+    const sel = $(`cand-${n.id}`);
+    const roleCount = Object.keys(n.roles).length;
+    const badSel = !n.candidate && (roleCount > 0 || nominations.length > 1);
+    sel.classList.toggle("invalid", badSel);
+    if (badSel) { ok = false; listMsg = listMsg || "Each entry needs a candidate selected (or remove the empty entry)."; }
+    Object.entries(n.roles).forEach(([r, why]) => {
+      const t = $(`why-${n.id}-${r.replace(/\W/g, "")}`);
+      if (!why.trim()) { t.classList.add("invalid"); ok = false; listMsg = listMsg || "Please explain each role you selected."; }
+    });
+  });
+  showErr("listErr", !!listMsg, listMsg);
+  return ok;
+}
+
+/* ==========================================================
+   EMAIL GENERATION
+   ========================================================== */
+function summaryText(chosen) {
+  return chosen.map((n, i) => {
+    const entries = Object.entries(n.roles);
+    let s = `${i + 1}. ${n.candidate}\n`;
+    if (!entries.length) s += "   Roles: none assigned\n";
+    else entries.forEach(([r, why]) => { s += `   • ${r}\n     Why: ${why.trim().replace(/\n/g, "\n          ")}\n`; });
+    return s;
+  }).join("\n");
+}
+
+function buildEmails() {
+  const name = $("subName").value.trim();
+  const email = $("subEmail").value.trim();
+  const chosen = nominations.filter(n => n.candidate);
+  const when = new Date().toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
+  const summary = summaryText(chosen);
+  const roleTotal = chosen.reduce((a, n) => a + Object.keys(n.roles).length, 0);
+
+  const toSubmitter = {
+    label: "Confirmation to you",
+    to: email,
+    subject: `Your candidate nominations — ${CONFIG.organisation}`,
+    body:
+`Dear ${name},
+
+Thank you for submitting your candidate nominations. Here is a copy of what you submitted on ${when}:
+
+${summary}
+If anything needs changing, please reply to this email.
+
+Kind regards,
+${CONFIG.organisation}`
+  };
+
+  const toThirdParty = {
+    label: `Submission to ${CONFIG.thirdPartyName}`,
+    to: CONFIG.thirdPartyEmail,
+    subject: `New nominations from ${name} (${chosen.length} candidate${chosen.length === 1 ? "" : "s"})`,
+    body:
+`Hello ${CONFIG.thirdPartyName},
+
+A new set of candidate nominations has been submitted.
+
+Submitted by: ${name} <${email}>
+Submitted on: ${when}
+Candidates: ${chosen.length} · Role assignments: ${roleTotal}
+
+${summary}
+This message was generated by the Candidate Nominations form.`
+  };
+
+  return [toSubmitter, toThirdParty];
+}
+
+function renderEmails(list) {
+  const host = $("emails");
+  host.innerHTML = "";
+  const banner = document.createElement("div");
+  banner.className = "banner";
+  banner.textContent = "These emails have not been sent. If the mail-app link doesn't open, use Copy and paste the text into a new email.";
+  host.append(banner);
+
+  list.forEach(m => {
+    const box = document.createElement("div");
+    box.className = "email";
+
+    const h = document.createElement("div");
+    h.className = "email-meta";
+    const title = document.createElement("div");
+    title.style.fontWeight = "600";
+    title.style.marginBottom = "6px";
+    title.textContent = m.label;
+    h.append(title);
+    [["To", m.to], ["Subject", m.subject]].forEach(([k, v]) => {
+      const d = document.createElement("div");
+      const b = document.createElement("b"); b.textContent = k;
+      d.append(b, document.createTextNode(v));
+      h.append(d);
+    });
+
+    const body = document.createElement("pre");
+    body.className = "email-body";
+    body.textContent = m.body;
+
+    const act = document.createElement("div");
+    act.className = "email-actions";
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "btn small";
+    copy.textContent = "Copy email";
+    const note = document.createElement("span");
+    copy.addEventListener("click", async () => {
+      const text = `To: ${m.to}\nSubject: ${m.subject}\n\n${m.body}`;
+      try { await navigator.clipboard.writeText(text); note.className = "copied"; note.textContent = "Copied"; }
+      catch { note.className = "hint"; note.textContent = "Copy blocked: select the text above and copy it manually."; }
+      setTimeout(() => { note.textContent = ""; }, 3000);
+    });
+    const a = document.createElement("a");
+    a.href = `mailto:${encodeURIComponent(m.to)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
+    a.textContent = "Open in mail app";
+    act.append(copy, a, note);
+
+    box.append(h, body, act);
+    host.append(box);
+  });
+}
+
+/* ==========================================================
+   WIRING
+   ========================================================== */
+$("addBtn").addEventListener("click", () => { nominations.push(newNomination()); render(); });
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!validate()) return;
+  renderEmails(buildEmails());
+  $("formView").classList.add("hidden");
+  $("resultView").classList.remove("hidden");
+  window.scrollTo(0, 0);
+});
+
+$("backBtn").addEventListener("click", () => {
+  $("resultView").classList.add("hidden");
+  $("formView").classList.remove("hidden");
+});
+
+["subName", "subEmail"].forEach(id =>
+  $(id).addEventListener("input", () => $(id).classList.remove("invalid")));
+
+nominations.push(newNomination());
+render();
+</script>
+</body>
+</html>
