@@ -62,6 +62,9 @@
   .email-actions { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--line); flex-wrap:wrap; align-items:center; }
   .email-actions a { font-size:.85rem; color:var(--accent); }
   .copied { color:var(--ok); font-size:.82rem; }
+  .informed { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); }
+  .yn { display:flex; gap:8px; margin-top:4px; }
+  .yn.invalid .role-chip { border-color:var(--danger); }
   .hidden { display:none; }
 </style>
 </head>
@@ -136,7 +139,7 @@ let nominations = [];
 let nextId = 1;
 
 function newNomination() {
-  return { id: nextId++, candidate: "", roles: {} }; // roles: { "Role A": "why..." }
+  return { id: nextId++, candidate: "", roles: {}, informed: "" }; // roles: { "Role A": "why..." }
 }
 
 const $ = (id) => document.getElementById(id);
@@ -228,6 +231,28 @@ function render() {
       box.append(w);
     });
 
+    // Has the candidate been informed?
+    const inf = document.createElement("div");
+    inf.className = "informed";
+    const q = document.createElement("label");
+    q.textContent = "Έχεις μιλήσει με/ενημερώσει το άτομο αυτό για το ότι θα το προτείνεις;";
+    const yn = document.createElement("div");
+    yn.className = "yn";
+    yn.id = `inf-${nom.id}`;
+    ["Ναι", "Όχι"].forEach(v => {
+      const chip = document.createElement("label");
+      chip.className = "role-chip" + (nom.informed === v ? " on" : "");
+      const rb = document.createElement("input");
+      rb.type = "radio";
+      rb.name = `inf-${nom.id}`;
+      rb.checked = nom.informed === v;
+      rb.addEventListener("change", () => { nom.informed = v; render(); });
+      chip.append(rb, document.createTextNode(v));
+      yn.append(chip);
+    });
+    inf.append(q, yn);
+    box.append(inf);
+
     host.append(box);
   });
 
@@ -265,6 +290,10 @@ function validate() {
     const badSel = !n.candidate && (roleCount > 0 || nominations.length > 1);
     sel.classList.toggle("invalid", badSel);
     if (badSel) { ok = false; listMsg = listMsg || "Κάθε καταχώριση χρειάζεται υποψήφιο (ή αφαιρέστε την κενή καταχώριση)."; }
+    const yn = $(`inf-${n.id}`);
+    const badInf = !!n.candidate && !n.informed;
+    yn.classList.toggle("invalid", badInf);
+    if (badInf) { ok = false; listMsg = listMsg || "Απαντήστε αν έχετε ενημερώσει κάθε υποψήφιο."; }
     Object.entries(n.roles).forEach(([r, why]) => {
       const t = $(`why-${n.id}-${CONFIG.roles.indexOf(r)}`);
       if (!why.trim()) { t.classList.add("invalid"); ok = false; listMsg = listMsg || "Αιτιολογήστε κάθε ρόλο που επιλέξατε."; }
@@ -280,7 +309,7 @@ function validate() {
 function summaryText(chosen) {
   return chosen.map((n, i) => {
     const entries = Object.entries(n.roles);
-    let s = `${i + 1}. ${n.candidate}\n`;
+    let s = `${i + 1}. ${n.candidate}\n   Έχει ενημερωθεί για την πρόταση: ${n.informed}\n`;
     if (!entries.length) s += "   Ρόλοι: κανένας\n";
     else entries.forEach(([r, why]) => { s += `   • ${r}\n     Αιτιολόγηση: ${why.trim().replace(/\n/g, "\n                  ")}\n`; });
     return s;
