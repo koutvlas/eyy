@@ -123,7 +123,7 @@ const CONFIG = {
     "Alex Morgan", "Jamie Chen", "Priya Nair", "Daniel Okafor",
     "Sofia Rossi", "Liam O'Brien", "Elena Petrova", "Marcus Lee"
   ],
-  roles: ["Role A", "Role B", "Role C"],
+  roles: ["ΔΣ", "ΕΥΥ", "ΕΕ"],
   thirdPartyEmail: "review-panel@example.com",
   thirdPartyName: "Review Panel",
   organisation: "Nominations Committee"
@@ -215,7 +215,7 @@ function render() {
       const w = document.createElement("div");
       w.className = "why";
       const l = document.createElement("label");
-      const tid = `why-${nom.id}-${r.replace(/\W/g, "")}`;
+      const tid = `why-${nom.id}-${CONFIG.roles.indexOf(r)}`;
       l.htmlFor = tid;
       l.textContent = `Why did you choose ${nom.candidate || "this person"} for ${r}?`;
       const t = document.createElement("textarea");
@@ -265,7 +265,7 @@ function validate() {
     sel.classList.toggle("invalid", badSel);
     if (badSel) { ok = false; listMsg = listMsg || "Each entry needs a candidate selected (or remove the empty entry)."; }
     Object.entries(n.roles).forEach(([r, why]) => {
-      const t = $(`why-${n.id}-${r.replace(/\W/g, "")}`);
+      const t = $(`why-${n.id}-${CONFIG.roles.indexOf(r)}`);
       if (!why.trim()) { t.classList.add("invalid"); ok = false; listMsg = listMsg || "Please explain each role you selected."; }
     });
   });
