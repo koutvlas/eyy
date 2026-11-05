@@ -136,13 +136,13 @@
 const CONFIG = {
   // Google Apps Script web-app URL (ends in /exec). When set, submissions are sent
   // automatically. When empty, the site falls back to showing the two emails as drafts.
-  scriptUrl: "",
+  scriptUrl: "https://script.google.com/macros/s/AKfycbzjHtaGVvbtLrshzdWjDpgk6pCBD-j1LijLSl4wPTm66btMAl5a4OH5If6uSHAjVdoB/exec",
   candidates: [
     "Μαρία Παπαδοπούλου", "Γιώργος Νικολάου", "Ελένη Γεωργίου", "Νίκος Αλεξίου",
     "Κατερίνα Δημητρίου", "Δημήτρης Ιωάννου", "Σοφία Κωνσταντίνου", "Ανδρέας Βασιλείου"
   ],
   roles: ["ΔΣ", "ΕΥΥ", "ΕΕ"],
-  thirdPartyEmail: "koutvlas@gmail.com",
+  thirdPartyEmail: "",   // only used if scriptUrl is empty
   thirdPartyName: "Επιτροπή Υποβολής Υποψηφιοτήτων",
   organisation: "Επιτροπή Προτάσεων"
 };
