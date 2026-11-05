@@ -103,6 +103,7 @@
 
       <div class="card">
         <h2>Οι υποψήφιοι που προτείνεις</h2>
+        <div class="empty" id="listStatus">Φόρτωση λίστας μελών…</div>
         <div id="nominations"></div>
         <button type="button" class="btn" id="addBtn">+ Προσθήκη υποψηφίου</button>
         <div class="err" id="listErr"></div>
@@ -147,10 +148,7 @@ const CONFIG = {
   // Google Apps Script web-app URL (ends in /exec). When set, submissions are sent
   // automatically. When empty, the site falls back to showing the two emails as drafts.
   scriptUrl: "https://script.google.com/macros/s/AKfycbzjHtaGVvbtLrshzdWjDpgk6pCBD-j1LijLSl4wPTm66btMAl5a4OH5If6uSHAjVdoB/exec",
-  candidates: [
-    "Μαρία Παπαδοπούλου", "Γιώργος Νικολάου", "Ελένη Γεωργίου", "Νίκος Αλεξίου",
-    "Κατερίνα Δημητρίου", "Δημήτρης Ιωάννου", "Σοφία Κωνσταντίνου", "Ανδρέας Βασιλείου"
-  ],
+  candidates: [],   // loaded from the Google script when the page opens
   roles: ["ΔΣ", "ΕΥΥ", "ΕΕ"],
   thirdPartyEmail: "",   // only used if scriptUrl is empty
   thirdPartyName: "Επιτροπή Υποβολής Υποψηφιοτήτων",
@@ -523,12 +521,28 @@ function showQuota(n) {
   }
 }
 
+let membersLoaded = false;
+
 async function loadQuota() {
   try {
     const res = await fetch(CONFIG.scriptUrl);
     const out = await res.json();
     if (typeof out.remaining === "number") showQuota(out.remaining);
-  } catch { /* counter is optional: leave it hidden */ }
+    if (!membersLoaded) {
+      if (!Array.isArray(out.candidates) || !out.candidates.length) throw new Error("no member list");
+      CONFIG.candidates = out.candidates;
+      membersLoaded = true;
+      $("listStatus").classList.add("hidden");
+      render();
+    }
+  } catch {
+    if (!membersLoaded) {
+      $("listStatus").textContent = "Δεν ήταν δυνατή η φόρτωση της λίστας μελών. Ανανέωσε τη σελίδα σε λίγο.";
+      $("listStatus").style.color = "var(--danger)";
+      $("submitBtn").disabled = true;
+      $("submitBtn").dataset.full = "1";
+    }
+  }
 }
 
 if (CONFIG.scriptUrl) {
