@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Προτάσεις Υποψηφίων</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1c2230; --muted: #626b7d;
+    --line: #e2e5eb; --accent: #2f5bea; --accent-soft: #eaf0ff;
+    --danger: #c63a3a; --ok: #1f8a4c; --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151b; --card:#1b1f27; --ink:#e7eaf0; --muted:#9aa3b2;
+            --line:#2c323d; --accent:#6d8dff; --accent-soft:#232b45; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:Inter, system-ui, sans-serif; background:var(--bg); color:var(--ink); line-height:1.5; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 1.75rem; margin: 0 0 6px; letter-spacing:-0.01em; }
+  .lead { color: var(--muted); margin: 0 0 28px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:18px; }
+  .card h2 { font-size:1.05rem; margin:0 0 14px; }
+  label { font-size:.88rem; font-weight:500; display:block; margin-bottom:6px; }
+  input[type=text], input[type=email], select, textarea {
+    width:100%; font:inherit; color:var(--ink); background:var(--bg);
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+  }
+  textarea { resize:vertical; min-height:70px; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:1px; border-color:transparent; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:600px){ .row { grid-template-columns:1fr; } }
+  .nom { border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; position:relative; }
+  .nom-head { display:flex; gap:10px; align-items:end; }
+  .nom-head > div { flex:1; }
+  .roles { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px; }
+  .role-chip { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line);
+    border-radius:999px; padding:6px 14px; cursor:pointer; font-size:.9rem; user-select:none; }
+  .role-chip input { accent-color: var(--accent); }
+  .role-chip.on { background:var(--accent-soft); border-color:var(--accent); }
+  .hint { color:var(--muted); font-size:.82rem; margin:4px 0 0; }
+  .why { margin-top:12px; }
+  .btn { font:inherit; font-weight:600; border-radius:8px; padding:10px 16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  .btn:hover { border-color:var(--accent); }
+  .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn.primary:hover { filter:brightness(1.08); }
+  .btn.small { padding:6px 10px; font-size:.82rem; font-weight:500; }
+  .btn.remove { color:var(--danger); }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; }
+  .err { color:var(--danger); font-size:.85rem; margin-top:6px; display:none; }
+  .err.show { display:block; }
+  .invalid { border-color:var(--danger) !important; }
+  .banner { border-radius:10px; padding:14px 16px; margin-bottom:18px; background:var(--accent-soft); font-size:.92rem; }
+  .email { border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:18px; }
+  .email-meta { padding:12px 16px; border-bottom:1px solid var(--line); font-size:.88rem; }
+  .email-meta div { margin:2px 0; }
+  .email-meta b { display:inline-block; width:64px; color:var(--muted); font-weight:500; }
+  .email-body { padding:16px; white-space:pre-wrap; font-size:.9rem; margin:0; font-family:inherit; }
+  .email-actions { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--line); flex-wrap:wrap; align-items:center; }
+  .email-actions a { font-size:.85rem; color:var(--accent); }
+  .copied { color:var(--ok); font-size:.82rem; }
+  .informed { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); }
+  .yn { display:flex; gap:8px; margin-top:4px; }
+  .yn.invalid .role-chip, .roles.invalid .role-chip { border-color:var(--danger); }
+  .quota { display:inline-flex; align-items:center; gap:8px; font-size:.88rem; font-weight:500;
+    background:var(--accent-soft); border-radius:999px; padding:6px 14px; margin:-12px 0 24px; }
+  .quota .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); }
+  .quota.low .dot { background:#d68a00; }
+  .quota.none { background:transparent; border:1px solid var(--danger); color:var(--danger); border-radius:10px; }
+  .quota.none .dot { background:var(--danger); }
+  .list-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+  .list-head h2 { margin:0; }
+  .counter { font-size:.85rem; color:var(--muted); }
+  .counter b { color:var(--accent); }
+  .search { margin:12px 0 14px; }
+  .cand { border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+  .cand.active { border-color:var(--accent); background:color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+  .cand-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .cand-name { font-weight:600; }
+  .cand .roles { margin:0; }
+  .cand .why:first-of-type { margin-top:12px; }
+  .empty { color:var(--muted); font-size:.9rem; padding:8px 2px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ======================= FORM VIEW ======================= -->
+  <div id="formView">
+    <h1>Προτάσεις Υποψηφίων</h1>
+    <p class="lead" id="formLead">Επίλεξε υποψηφίους από τη λίστα όλων των Μελών της Γενικής Συνέλευσης, όρισε για κάθε ένα ξεχωριστά για ποιους ρόλους θα ήθελες να προταθούν, και δώσε μια μικρή αιτιολόγηση ως προς τα κριτήρια πρότασής τους. Κατά την υποβολή δημιουργούνται δύο email: ένα επιβεβαίωσης που στέλνεται στο email που έβαλες, και ένα προς το email της Επιτροπής με τις προτάσεις σου.</p>
+
+    <div class="quota hidden" id="quota"><span class="dot"></span><span id="quotaText"></span></div>
+
+    <form id="form" novalidate>
+      <div class="card">
+        <h2>Τα στοιχεία σου</h2>
+        <div class="row">
+          <div>
+            <label for="subName">Ονοματεπώνυμο</label>
+            <input type="text" id="subName" autocomplete="name">
+            <div class="err" id="subNameErr">Συμπλήρωσε το όνομά σου.</div>
+          </div>
+          <div>
+            <label for="subEmail">Email</label>
+            <input type="email" id="subEmail" autocomplete="email">
+            <div class="err" id="subEmailErr">Βάλε μια έγκυρη διεύθυνση email.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="list-head">
+          <h2>Μέλη της Γενικής Συνέλευσης</h2>
+          <span class="counter" id="counter"></span>
+        </div>
+        <p class="hint">Για κάθε μέλος τσέκαρε από 0 έως 3 ρόλους. Για κάθε ρόλο που επιλέγεις θα σου ζητηθεί μια σύντομη αιτιολόγηση.</p>
+        <input type="text" class="search" id="search" placeholder="Αναζήτηση ονόματος…" autocomplete="off">
+        <div id="nominations"></div>
+        <div class="empty hidden" id="noMatch">Κανένα μέλος δεν ταιριάζει με την αναζήτηση.</div>
+        <div class="err" id="listErr"></div>
+      </div>
+
+      <!-- spam trap: hidden from people, bots fill it in -->
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"
+             style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
+      <div class="actions">
+        <span></span>
+        <button type="submit" class="btn primary" id="submitBtn">Υποβολή και δημιουργία email</button>
+      </div>
+      <div class="err" id="submitErr" style="text-align:right"></div>
+    </form>
+  </div>
+
+  <!-- ======================= RESULT VIEW ======================= -->
+  <div id="resultView" class="hidden">
+    <h1>Τα email σου είναι έτοιμα</h1>
+    <p class="lead">Από την υποβολή σου δημιουργήθηκαν δύο email. Δεν έχει σταλεί τίποτα ακόμη: άνοιξε το καθένα στην εφαρμογή email σου ή αντίγραψέ το και στείλ' το εσύ.</p>
+    <div id="emails"></div>
+    <button type="button" class="btn" id="backBtn">← Επεξεργασία υποβολής</button>
+  </div>
+
+  <!-- ======================= SENT VIEW ======================= -->
+  <div id="sentView" class="hidden">
+    <h1>Η υποβολή σου στάλθηκε</h1>
+    <p class="lead">Σ' ευχαριστούμε! Θα λάβεις σύντομα email επιβεβαίωσης στο <b id="sentEmail"></b>. Αν δεν το βρεις, έλεγξε και τον φάκελο ανεπιθύμητης αλληλογραφίας.</p>
+    <button type="button" class="btn" id="againBtn">Νέα υποβολή</button>
+  </div>
+
+</div>
+
+<script>
+/* ==========================================================
+   CONFIGURATION — edit these to fit your use
+   ========================================================== */
+const MAX_PER_DAY = 50;   // Google allows 100 emails/day on a personal Gmail; 2 per submission
+
+const CONFIG = {
+  // Google Apps Script web-app URL (ends in /exec). When set, submissions are sent
+  // automatically. When empty, the site falls back to showing the two emails as drafts.
+  scriptUrl: "https://script.google.com/macros/s/AKfycbzjHtaGVvbtLrshzdWjDpgk6pCBD-j1LijLSl4wPTm66btMAl5a4OH5If6uSHAjVdoB/exec",
+  candidates: [
+    "Μαρία Παπαδοπούλου", "Γιώργος Νικολάου", "Ελένη Γεωργίου", "Νίκος Αλεξίου",
+    "Κατερίνα Δημητρίου", "Δημήτρης Ιωάννου", "Σοφία Κωνσταντίνου", "Ανδρέας Βασιλείου"
+  ],
+  roles: ["ΔΣ", "ΕΥΥ", "ΕΕ"],
+  thirdPartyEmail: "",   // only used if scriptUrl is empty
+  thirdPartyName: "Επιτροπή Υποβολής Υποψηφιοτήτων",
+  organisation: "Επιτροπή Προτάσεων"
+};
+
+/* ==========================================================
+   STATE + RENDERING
+   ========================================================== */
+let nominations = [];
+
+function freshList() {
+  return CONFIG.candidates.map((c, i) => ({ id: i + 1, candidate: c, roles: {}, informed: "" }));
+}
+const isActive = n => Object.keys(n.roles).length > 0;
+const active = () => nominations.filter(isActive);
+
+const $ = (id) => document.getElementById(id);
+
+// accent- and case-insensitive matching for Greek names
+const norm = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/ς/g, "σ");
+
+function applySearch() {
+  const q = norm($("search").value.trim());
+  let shown = 0;
+  nominations.forEach(n => {
+    const hit = !q || norm(n.candidate).includes(q);
+    $(`cand-${n.id}`).classList.toggle("hidden", !hit);
+    if (hit) shown++;
+  });
+  $("noMatch").classList.toggle("hidden", shown > 0);
+}
+
+function updateCounter() {
+  const k = active().length;
+  $("counter").innerHTML = k
+    ? `Προτείνεις <b>${k}</b> ${k === 1 ? "μέλος" : "μέλη"}`
+    : "Δεν έχεις επιλέξει ακόμη κανέναν";
+}
+
+function render() {
+  showErr("listErr", false);
+  const host = $("nominations");
+  host.innerHTML = "";
+  nominations.forEach(nom => {
+    const box = document.createElement("div");
+    box.className = "cand" + (isActive(nom) ? " active" : "");
+    box.id = `cand-${nom.id}`;
+
+    // Name + role checkboxes on one line
+    const head = document.createElement("div");
+    head.className = "cand-head";
+    const name = document.createElement("span");
+    name.className = "cand-name";
+    name.textContent = nom.candidate;
+    const roles = document.createElement("div");
+    roles.className = "roles";
+    roles.id = `roles-${nom.id}`;
+    CONFIG.roles.forEach(r => {
+      const chip = document.createElement("label");
+      chip.className = "role-chip" + (r in nom.roles ? " on" : "");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = r in nom.roles;
+      cb.addEventListener("change", () => {
+        if (cb.checked) nom.roles[r] = nom.roles[r] || "";
+        else delete nom.roles[r];
+        if (!isActive(nom)) nom.informed = "";
+        render();
+        const t = cb.checked && $(`why-${nom.id}-${CONFIG.roles.indexOf(r)}`);
+        if (t) t.focus({ preventScroll: true });
+      });
+      chip.append(cb, document.createTextNode(r));
+      roles.append(chip);
+    });
+    head.append(name, roles);
+    box.append(head);
+
+    if (isActive(nom)) {
+      // "Why" field per chosen role
+      CONFIG.roles.filter(r => r in nom.roles).forEach(r => {
+        const w = document.createElement("div");
+        w.className = "why";
+        const l = document.createElement("label");
+        const tid = `why-${nom.id}-${CONFIG.roles.indexOf(r)}`;
+        l.htmlFor = tid;
+        l.textContent = `Γιατί επέλεξες το άτομο «${nom.candidate}» για τον ρόλο ${r};`;
+        const t = document.createElement("textarea");
+        t.id = tid;
+        t.value = nom.roles[r];
+        t.placeholder = "Αιτιολόγησε την επιλογή σου…";
+        t.addEventListener("input", () => { nom.roles[r] = t.value; t.classList.remove("invalid"); });
+        w.append(l, t);
+        box.append(w);
+      });
+
+      // Has the candidate been informed?
+      const inf = document.createElement("div");
+      inf.className = "informed";
+      const q = document.createElement("label");
+      q.textContent = "Έχεις μιλήσει με/ενημερώσει το άτομο αυτό για το ότι θα το προτείνεις;";
+      const yn = document.createElement("div");
+      yn.className = "yn";
+      yn.id = `inf-${nom.id}`;
+      ["Ναι", "Όχι"].forEach(v => {
+        const chip = document.createElement("label");
+        chip.className = "role-chip" + (nom.informed === v ? " on" : "");
+        const rb = document.createElement("input");
+        rb.type = "radio";
+        rb.name = `inf-${nom.id}`;
+        rb.checked = nom.informed === v;
+        rb.addEventListener("change", () => { nom.informed = v; render(); });
+        chip.append(rb, document.createTextNode(v));
+        yn.append(chip);
+      });
+      inf.append(q, yn);
+      box.append(inf);
+    }
+
+    host.append(box);
+  });
+  updateCounter();
+  applySearch();
+}
+
+/* ==========================================================
+   VALIDATION
+   ========================================================== */
+function showErr(id, on, msg) {
+  const e = $(id);
+  if (msg) e.textContent = msg;
+  e.classList.toggle("show", on);
+}
+
+function validate() {
+  let ok = true;
+  const name = $("subName").value.trim();
+  const email = $("subEmail").value.trim();
+  const nameBad = !name;
+  const emailBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  $("subName").classList.toggle("invalid", nameBad);
+  $("subEmail").classList.toggle("invalid", emailBad);
+  showErr("subNameErr", nameBad);
+  showErr("subEmailErr", emailBad);
+  if (nameBad || emailBad) ok = false;
+
+  let listMsg = "";
+  if (!active().length) { listMsg = "Τσέκαρε τουλάχιστον έναν ρόλο για τουλάχιστον ένα μέλος."; ok = false; }
+
+  active().forEach(n => {
+    const yn = $(`inf-${n.id}`);
+    const badInf = !n.informed;
+    yn.classList.toggle("invalid", badInf);
+    if (badInf) { ok = false; listMsg = listMsg || "Απάντησε αν έχεις ενημερώσει κάθε άτομο που προτείνεις."; }
+    Object.entries(n.roles).forEach(([r, why]) => {
+      const t = $(`why-${n.id}-${CONFIG.roles.indexOf(r)}`);
+      if (!why.trim()) { t.classList.add("invalid"); ok = false; listMsg = listMsg || "Αιτιολόγησε κάθε ρόλο που επέλεξες."; }
+    });
+  });
+  if (!ok && $("search").value) { $("search").value = ""; applySearch(); }   // make errors visible
+  showErr("listErr", !!listMsg, listMsg);
+  return ok;
+}
+
+/* ==========================================================
+   EMAIL GENERATION
+   ========================================================== */
+function summaryText(chosen) {
+  return chosen.map((n, i) => {
+    const entries = Object.entries(n.roles);
+    let s = `${i + 1}. ${n.candidate}\n   Έχει ενημερωθεί για την πρόταση: ${n.informed}\n`;
+    if (!entries.length) s += "   Ρόλοι: κανένας\n";
+    else entries.forEach(([r, why]) => { s += `   • ${r}\n     Αιτιολόγηση: ${why.trim().replace(/\n/g, "\n                  ")}\n`; });
+    return s;
+  }).join("\n");
+}
+
+function buildEmails() {
+  const name = $("subName").value.trim();
+  const email = $("subEmail").value.trim();
+  const chosen = active();
+  const when = new Date().toLocaleString("el-GR", { dateStyle: "long", timeStyle: "short" });
+  const summary = summaryText(chosen);
+  const roleTotal = chosen.reduce((a, n) => a + Object.keys(n.roles).length, 0);
+
+  const toSubmitter = {
+    label: "Επιβεβαίωση προς εσένα",
+    to: email,
+    subject: `Οι προτάσεις υποψηφίων σου — ${CONFIG.organisation}`,
+    body:
+`Αγαπητή/-έ ${name},
+
+Σ' ευχαριστούμε για την υποβολή των προτάσεών σου. Ακολουθεί αντίγραφο όσων υπέβαλες στις ${when}:
+
+${summary}
+Αν χρειάζεται κάποια αλλαγή, απάντησε σε αυτό το email.
+
+Με εκτίμηση,
+${CONFIG.organisation}`
+  };
+
+  const toThirdParty = {
+    label: `Υποβολή προς την ${CONFIG.thirdPartyName}`,
+    to: CONFIG.thirdPartyEmail,
+    subject: `Νέες προτάσεις από ${name} (${chosen.length} υποψήφι${chosen.length === 1 ? "ος" : "οι"})`,
+    body:
+`Προς την ${CONFIG.thirdPartyName},
+
+Υποβλήθηκε νέα λίστα προτάσεων υποψηφίων.
+
+Υποβλήθηκε από: ${name} <${email}>
+Ημερομηνία: ${when}
+Υποψήφιοι: ${chosen.length} · Αναθέσεις ρόλων: ${roleTotal}
+
+${summary}
+Το μήνυμα δημιουργήθηκε αυτόματα από τη φόρμα Προτάσεων Υποψηφίων.`
+  };
+
+  return [toSubmitter, toThirdParty];
+}
+
+function renderEmails(list) {
+  const host = $("emails");
+  host.innerHTML = "";
+  const banner = document.createElement("div");
+  banner.className = "banner";
+  banner.textContent = "Τα email δεν έχουν σταλεί. Αν ο σύνδεσμος δεν ανοίγει την εφαρμογή email, πάτησε «Αντιγραφή» και επικόλλησε το κείμενο σε νέο email.";
+  host.append(banner);
+
+  list.forEach(m => {
+    const box = document.createElement("div");
+    box.className = "email";
+
+    const h = document.createElement("div");
+    h.className = "email-meta";
+    const title = document.createElement("div");
+    title.style.fontWeight = "600";
+    title.style.marginBottom = "6px";
+    title.textContent = m.label;
+    h.append(title);
+    [["Προς", m.to], ["Θέμα", m.subject]].forEach(([k, v]) => {
+      const d = document.createElement("div");
+      const b = document.createElement("b"); b.textContent = k;
+      d.append(b, document.createTextNode(v));
+      h.append(d);
+    });
+
+    const body = document.createElement("pre");
+    body.className = "email-body";
+    body.textContent = m.body;
+
+    const act = document.createElement("div");
+    act.className = "email-actions";
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "btn small";
+    copy.textContent = "Αντιγραφή email";
+    const note = document.createElement("span");
+    copy.addEventListener("click", async () => {
+      const text = `Προς: ${m.to}\nΘέμα: ${m.subject}\n\n${m.body}`;
+      try { await navigator.clipboard.writeText(text); note.className = "copied"; note.textContent = "Αντιγράφηκε"; }
+      catch { note.className = "hint"; note.textContent = "Η αντιγραφή απέτυχε: επίλεξε το κείμενο και αντίγραψέ το χειροκίνητα."; }
+      setTimeout(() => { note.textContent = ""; }, 3000);
+    });
+    const a = document.createElement("a");
+    a.href = `mailto:${encodeURIComponent(m.to)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
+    a.textContent = "Άνοιγμα στην εφαρμογή email";
+    act.append(copy, a, note);
+
+    box.append(h, body, act);
+    host.append(box);
+  });
+}
+
+/* ==========================================================
+   WIRING
+   ========================================================== */
+$("search").addEventListener("input", applySearch);
+
+function showView(id) {
+  ["formView", "resultView", "sentView"].forEach(v => $(v).classList.toggle("hidden", v !== id));
+  window.scrollTo(0, 0);
+}
+
+function payload() {
+  return {
+    name: $("subName").value.trim(),
+    email: $("subEmail").value.trim(),
+    website: $("website").value,
+    nominations: active().map(n => ({
+      candidate: n.candidate,
+      informed: n.informed,
+      roles: Object.fromEntries(CONFIG.roles.filter(r => r in n.roles).map(r => [r, n.roles[r].trim()]))
+    }))
+  };
+}
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showErr("submitErr", false);
+  if (!validate()) return;
+
+  // No backend configured: show the emails as drafts
+  if (!CONFIG.scriptUrl) {
+    renderEmails(buildEmails());
+    showView("resultView");
+    return;
+  }
+
+  const btn = $("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Αποστολή…";
+  try {
+    const res = await fetch(CONFIG.scriptUrl, { method: "POST", body: JSON.stringify(payload()) });
+    let out;
+    try { out = await res.json(); } catch { throw new Error("μη αναμενόμενη απάντηση από τον διακομιστή"); }
+    if (typeof out.remaining === "number") showQuota(out.remaining);
+    if (!out.ok) throw new Error(out.error || "άγνωστο σφάλμα");
+    $("sentEmail").textContent = $("subEmail").value.trim();
+    showView("sentView");
+  } catch (err) {
+    const msg = err instanceof TypeError ? "δεν ήταν δυνατή η σύνδεση" : err.message;
+    showErr("submitErr", true, `Η αποστολή απέτυχε (${msg}). Δοκίμασε ξανά σε λίγο.`);
+  } finally {
+    btn.textContent = "Υποβολή";
+    btn.disabled = !!btn.dataset.full;
+  }
+});
+
+$("againBtn").addEventListener("click", () => {
+  nominations = freshList();
+  $("search").value = "";
+  $("subName").value = "";
+  $("subEmail").value = "";
+  render();
+  showView("formView");
+  loadQuota();
+});
+
+function showQuota(n) {
+  const box = $("quota");
+  box.classList.remove("hidden", "low", "none");
+  const btn = $("submitBtn");
+  if (n <= 0) {
+    box.classList.add("none");
+    $("quotaText").textContent = "Συμπληρώθηκε το όριο υποβολών. Οι υποβολές θα είναι ξανά διαθέσιμες σε λίγες ώρες.";
+    btn.disabled = true;
+    btn.dataset.full = "1";
+  } else {
+    if (n <= 10) box.classList.add("low");
+    $("quotaText").textContent = `Διαθέσιμες υποβολές αυτή τη στιγμή: ${n} από ${MAX_PER_DAY}`;
+    btn.disabled = false;
+    delete btn.dataset.full;
+  }
+}
+
+async function loadQuota() {
+  try {
+    const res = await fetch(CONFIG.scriptUrl);
+    const out = await res.json();
+    if (typeof out.remaining === "number") showQuota(out.remaining);
+  } catch { /* counter is optional: leave it hidden */ }
+}
+
+if (CONFIG.scriptUrl) {
+  loadQuota();
+  $("submitBtn").textContent = "Υποβολή";
+  $("formLead").textContent = "Επίλεξε υποψηφίους από τη λίστα όλων των Μελών της Γενικής Συνέλευσης, όρισε για κάθε ένα ξεχωριστά για ποιους ρόλους θα ήθελες να προταθούν, και δώσε μια μικρή αιτιολόγηση ως προς τα κριτήρια πρότασής τους. Κατά την υποβολή δημιουργούνται δύο email: ένα επιβεβαίωσης που στέλνεται στο email που έβαλες, και ένα προς το email της Επιτροπής με τις προτάσεις σου.";
+}
+
+$("backBtn").addEventListener("click", () => {
+  $("resultView").classList.add("hidden");
+  $("formView").classList.remove("hidden");
+});
+
+["subName", "subEmail"].forEach(id =>
+  $(id).addEventListener("input", () => { $(id).classList.remove("invalid"); showErr(id + "Err", false); }));
+
+nominations = freshList();
+render();
+</script>
+</body>
+</html>
