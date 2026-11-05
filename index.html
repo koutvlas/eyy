@@ -64,7 +64,7 @@
   .copied { color:var(--ok); font-size:.82rem; }
   .informed { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); }
   .yn { display:flex; gap:8px; margin-top:4px; }
-  .yn.invalid .role-chip { border-color:var(--danger); }
+  .yn.invalid .role-chip, .roles.invalid .role-chip { border-color:var(--danger); }
   .quota { display:inline-flex; align-items:center; gap:8px; font-size:.88rem; font-weight:500;
     background:var(--accent-soft); border-radius:999px; padding:6px 14px; margin:-12px 0 24px; }
   .quota .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); }
@@ -219,6 +219,7 @@ function render() {
     // Roles (0–3)
     const roles = document.createElement("div");
     roles.className = "roles";
+    roles.id = `roles-${nom.id}`;
     CONFIG.roles.forEach(r => {
       const chip = document.createElement("label");
       chip.className = "role-chip" + (r in nom.roles ? " on" : "");
@@ -236,7 +237,7 @@ function render() {
     box.append(roles);
     const hint = document.createElement("p");
     hint.className = "hint";
-    hint.textContent = "Μπορείς να επιλέξεις από 0 έως 3 ρόλους.";
+    hint.textContent = "Επίλεξε από 1 έως 3 ρόλους.";
     box.append(hint);
 
     // "Why" field per chosen role
@@ -315,6 +316,9 @@ function validate() {
     const badSel = !n.candidate && (roleCount > 0 || nominations.length > 1);
     sel.classList.toggle("invalid", badSel);
     if (badSel) { ok = false; listMsg = listMsg || "Κάθε καταχώριση χρειάζεται υποψήφιο (ή αφαίρεσε την κενή καταχώριση)."; }
+    const badRoles = !!n.candidate && roleCount === 0;
+    $(`roles-${n.id}`).classList.toggle("invalid", badRoles);
+    if (badRoles) { ok = false; listMsg = listMsg || "Επίλεξε τουλάχιστον έναν ρόλο για κάθε υποψήφιο."; }
     const yn = $(`inf-${n.id}`);
     const badInf = !!n.candidate && !n.informed;
     yn.classList.toggle("invalid", badInf);
