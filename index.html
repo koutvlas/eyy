@@ -74,7 +74,7 @@
   <!-- ======================= FORM VIEW ======================= -->
   <div id="formView">
     <h1>Προτάσεις Υποψηφίων</h1>
-    <p class="lead">Επιλέξτε υποψηφίους από τη λίστα, ορίστε για τον καθένα έως τρεις ρόλους και αιτιολογήστε κάθε επιλογή. Με την υποβολή δημιουργούνται δύο email: μια επιβεβαίωση για εσάς και ένα αντίγραφο για την επιτροπή αξιολόγησης.</p>
+    <p class="lead" id="formLead">Επιλέξτε υποψηφίους από τη λίστα, ορίστε για τον καθένα έως τρεις ρόλους και αιτιολογήστε κάθε επιλογή. Με την υποβολή δημιουργούνται δύο email: μια επιβεβαίωση για εσάς και ένα αντίγραφο για την επιτροπή αξιολόγησης.</p>
 
     <form id="form" novalidate>
       <div class="card">
@@ -100,10 +100,15 @@
         <div class="err" id="listErr"></div>
       </div>
 
+      <!-- spam trap: hidden from people, bots fill it in -->
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"
+             style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
       <div class="actions">
         <span></span>
-        <button type="submit" class="btn primary">Υποβολή και δημιουργία email</button>
+        <button type="submit" class="btn primary" id="submitBtn">Υποβολή και δημιουργία email</button>
       </div>
+      <div class="err" id="submitErr" style="text-align:right"></div>
     </form>
   </div>
 
@@ -115,6 +120,13 @@
     <button type="button" class="btn" id="backBtn">← Επεξεργασία υποβολής</button>
   </div>
 
+  <!-- ======================= SENT VIEW ======================= -->
+  <div id="sentView" class="hidden">
+    <h1>Η υποβολή σας στάλθηκε</h1>
+    <p class="lead">Σας ευχαριστούμε! Θα λάβετε σύντομα email επιβεβαίωσης στο <b id="sentEmail"></b>. Αν δεν το βρείτε, ελέγξτε και τον φάκελο ανεπιθύμητης αλληλογραφίας.</p>
+    <button type="button" class="btn" id="againBtn">Νέα υποβολή</button>
+  </div>
+
 </div>
 
 <script>
@@ -122,6 +134,9 @@
    CONFIGURATION — edit these to fit your use
    ========================================================== */
 const CONFIG = {
+  // Google Apps Script web-app URL (ends in /exec). When set, submissions are sent
+  // automatically. When empty, the site falls back to showing the two emails as drafts.
+  scriptUrl: "",
   candidates: [
     "Μαρία Παπαδοπούλου", "Γιώργος Νικολάου", "Ελένη Γεωργίου", "Νίκος Αλεξίου",
     "Κατερίνα Δημητρίου", "Δημήτρης Ιωάννου", "Σοφία Κωνσταντίνου", "Ανδρέας Βασιλείου"
@@ -418,14 +433,67 @@ function renderEmails(list) {
    ========================================================== */
 $("addBtn").addEventListener("click", () => { nominations.push(newNomination()); render(); });
 
-$("form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  if (!validate()) return;
-  renderEmails(buildEmails());
-  $("formView").classList.add("hidden");
-  $("resultView").classList.remove("hidden");
+function showView(id) {
+  ["formView", "resultView", "sentView"].forEach(v => $(v).classList.toggle("hidden", v !== id));
   window.scrollTo(0, 0);
+}
+
+function payload() {
+  return {
+    name: $("subName").value.trim(),
+    email: $("subEmail").value.trim(),
+    website: $("website").value,
+    nominations: nominations.filter(n => n.candidate).map(n => ({
+      candidate: n.candidate,
+      informed: n.informed,
+      roles: Object.fromEntries(CONFIG.roles.filter(r => r in n.roles).map(r => [r, n.roles[r].trim()]))
+    }))
+  };
+}
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showErr("submitErr", false);
+  if (!validate()) return;
+
+  // No backend configured: show the emails as drafts
+  if (!CONFIG.scriptUrl) {
+    renderEmails(buildEmails());
+    showView("resultView");
+    return;
+  }
+
+  const btn = $("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Αποστολή…";
+  try {
+    const res = await fetch(CONFIG.scriptUrl, { method: "POST", body: JSON.stringify(payload()) });
+    let out;
+    try { out = await res.json(); } catch { throw new Error("μη αναμενόμενη απάντηση από τον διακομιστή"); }
+    if (!out.ok) throw new Error(out.error || "άγνωστο σφάλμα");
+    $("sentEmail").textContent = $("subEmail").value.trim();
+    showView("sentView");
+  } catch (err) {
+    const msg = err instanceof TypeError ? "δεν ήταν δυνατή η σύνδεση" : err.message;
+    showErr("submitErr", true, `Η αποστολή απέτυχε (${msg}). Δοκιμάστε ξανά σε λίγο.`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Υποβολή";
+  }
 });
+
+$("againBtn").addEventListener("click", () => {
+  nominations = [newNomination()];
+  $("subName").value = "";
+  $("subEmail").value = "";
+  render();
+  showView("formView");
+});
+
+if (CONFIG.scriptUrl) {
+  $("submitBtn").textContent = "Υποβολή";
+  $("formLead").textContent = "Επιλέξτε υποψηφίους από τη λίστα, ορίστε για τον καθένα έως τρεις ρόλους και αιτιολογήστε κάθε επιλογή. Μετά την υποβολή θα λάβετε email επιβεβαίωσης.";
+}
 
 $("backBtn").addEventListener("click", () => {
   $("resultView").classList.add("hidden");
